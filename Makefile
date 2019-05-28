@@ -1,7 +1,7 @@
 OPENCM3DIR  = ./libopencm3
 OPENCM3NAME = opencm3_stm32f4
 OPENCM3FILE = $(OPENCM3DIR)/lib/lib$(OPENCM3NAME).a
-LDSCRIPT    = stm32f405x6.ld
+LDSCRIPT    = stm32f429i-discovery.ld
 
 PREFIX     ?= arm-none-eabi
 CC          = $(PREFIX)-gcc
@@ -38,6 +38,7 @@ COMMONINCLUDES=-I"mupq/common"
 COMMONINCLUDES_M4=$(COMMONINCLUDES) -I"common"
 
 RANDOMBYTES_M4=common/randombytes.c
+HAL=common/hal-stm32f429.c
 
 DEST_HOST=bin-host
 DEST=bin
@@ -75,22 +76,22 @@ $(DEST)/%.bin: elf/%.elf
 # pattern rules, intended to match % to the type of test (i.e. test, speed, stack)
 # note that this excludes testvectors, as that is a special case that provides its own randombytes
 # TODO use notrandombytes more generically rather than included in testvectors.c
-elf/$(TARGET_NAME)_%.elf: mupq/crypto_$(TYPE)/%.c $(COMMONSOURCES_M4) $(RANDOMBYTES_M4) $(IMPLEMENTATION_SOURCES) $(IMPLEMENTATION_HEADERS) $(OPENCM3FILE) common/hal-stm32f4.c
+elf/$(TARGET_NAME)_%.elf: mupq/crypto_$(TYPE)/%.c $(COMMONSOURCES_M4) $(RANDOMBYTES_M4) $(IMPLEMENTATION_SOURCES) $(IMPLEMENTATION_HEADERS) $(OPENCM3FILE) $(HAL)
 	mkdir -p elf
 	$(CC) -o $@ $(CFLAGS) -DMUPQ_NAMESPACE=$(MUPQ_NAMESPACE) \
-		$< $(COMMONSOURCES_M4) $(RANDOMBYTES_M4) $(IMPLEMENTATION_SOURCES) common/hal-stm32f4.c \
+		$< $(COMMONSOURCES_M4) $(RANDOMBYTES_M4) $(IMPLEMENTATION_SOURCES) $(HAL) \
 		-I$(IMPLEMENTATION_PATH) $(COMMONINCLUDES_M4) $(LDFLAGS)
 
-elf/$(TARGET_NAME)_testvectors.elf: mupq/crypto_$(TYPE)/testvectors.c $(COMMONSOURCES_M4) $(IMPLEMENTATION_SOURCES) $(IMPLEMENTATION_HEADERS) $(OPENCM3FILE) common/hal-stm32f4.c
+elf/$(TARGET_NAME)_testvectors.elf: mupq/crypto_$(TYPE)/testvectors.c $(COMMONSOURCES_M4) $(IMPLEMENTATION_SOURCES) $(IMPLEMENTATION_HEADERS) $(OPENCM3FILE) $(HAL)
 	mkdir -p elf
 	$(CC) -o $@ $(CFLAGS) -DMUPQ_NAMESPACE=$(MUPQ_NAMESPACE)\
-		$< $(COMMONSOURCES_M4) $(IMPLEMENTATION_SOURCES) common/hal-stm32f4.c \
+		$< $(COMMONSOURCES_M4) $(IMPLEMENTATION_SOURCES) $(HAL) \
 		-I$(IMPLEMENTATION_PATH) $(COMMONINCLUDES_M4) $(LDFLAGS)
 
-elf/$(TARGET_NAME)_hashing.elf: mupq/crypto_$(TYPE)/hashing.c $(COMMONSOURCES_M4) $(IMPLEMENTATION_SOURCES) $(IMPLEMENTATION_HEADERS) $(OPENCM3FILE) common/hal-stm32f4.c
+elf/$(TARGET_NAME)_hashing.elf: mupq/crypto_$(TYPE)/hashing.c $(COMMONSOURCES_M4) $(IMPLEMENTATION_SOURCES) $(IMPLEMENTATION_HEADERS) $(OPENCM3FILE) $(HAL)
 	mkdir -p elf
 	$(CC) -o $@ $(CFLAGS) -DPROFILE_HASHING -DMUPQ_NAMESPACE=$(MUPQ_NAMESPACE) \
-		$< $(COMMONSOURCES_M4) $(RANDOMBYTES_M4) $(IMPLEMENTATION_SOURCES) common/hal-stm32f4.c \
+		$< $(COMMONSOURCES_M4) $(RANDOMBYTES_M4) $(IMPLEMENTATION_SOURCES) $(HAL) \
 		-I$(IMPLEMENTATION_PATH) $(COMMONINCLUDES_M4) $(LDFLAGS)
 
 obj/$(TARGET_NAME)_%.o: $(IMPLEMENTATION_PATH)/%.c $(IMPLEMENTATION_HEADERS)
